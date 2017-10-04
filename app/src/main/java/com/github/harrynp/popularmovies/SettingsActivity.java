@@ -99,9 +99,11 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         // Display the fragment as the main content.
-        getFragmentManager().beginTransaction()
+        if (!onIsMultiPane()){
+            getFragmentManager().beginTransaction()
                 .replace(android.R.id.content, new GeneralPreferenceFragment())
                 .commit();
+        }
         setupActionBar();
     }
 
@@ -173,14 +175,18 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             // updated to reflect the new value, per the Android Design
             // guidelines.
             bindPreferenceSummaryToValue(findPreference(getString(R.string.pref_sort_key)));
+//            bindPreferenceSummaryToValue(findPreference(getString(R.string.pref_theme_key)));
         }
 
         @Override
         public boolean onOptionsItemSelected(MenuItem item) {
-            int id = item.getItemId();
-            if (id == android.R.id.home) {
-                startActivity(new Intent(getActivity(), SettingsActivity.class));
-                return true;
+            if ((getActivity().getResources().getConfiguration().screenLayout
+                    & Configuration.SCREENLAYOUT_SIZE_MASK) >= Configuration.SCREENLAYOUT_SIZE_XLARGE) {
+                int id = item.getItemId();
+                if (id == android.R.id.home) {
+                    startActivity(new Intent(getActivity(), SettingsActivity.class));
+                    return true;
+                }
             }
             return super.onOptionsItemSelected(item);
         }

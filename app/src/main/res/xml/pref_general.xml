@@ -8,6 +8,12 @@
             android:entryValues="@array/pref_sort_values"
             android:key="@string/pref_sort_key"
             android:title="@string/pref_sort_label" />
+        <!--<ListPreference-->
+            <!--android:defaultValue="@string/pref_theme_light"-->
+            <!--android:entries="@array/pref_theme_options"-->
+            <!--android:entryValues="@array/pref_theme_values"-->
+            <!--android:key="@string/pref_theme_key"-->
+            <!--android:title="@string/pref_theme_label" />-->
         <CheckBoxPreference
             android:defaultValue="false"
             android:key="@string/pref_hq_key"

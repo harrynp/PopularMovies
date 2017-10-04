@@ -6,8 +6,9 @@
     <ImageView
         android:id="@+id/grid_item_imageview"
         android:layout_gravity="center"
-        android:scaleType="centerCrop"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:background="#e7e7e7"/>
 
 </FrameLayout>

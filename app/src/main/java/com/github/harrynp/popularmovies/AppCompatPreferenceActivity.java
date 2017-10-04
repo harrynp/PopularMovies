@@ -1,8 +1,10 @@
 package com.github.harrynp.popularmovies;
 
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.preference.PreferenceActivity;
+import android.preference.PreferenceManager;
 import android.support.annotation.LayoutRes;
 import android.support.annotation.Nullable;
 import android.support.v7.app.ActionBar;
@@ -22,6 +24,11 @@ public abstract class AppCompatPreferenceActivity extends PreferenceActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        String theme = sharedPref.getString(getString(R.string.pref_theme_key), getString(R.string.pref_theme_light));
+        if (theme.equals(getString(R.string.pref_theme_dark))) {
+            setTheme(R.style.ActivityTheme_Primary_Base_Dark);
+        }
         getDelegate().installViewFactory();
         getDelegate().onCreate(savedInstanceState);
         super.onCreate(savedInstanceState);

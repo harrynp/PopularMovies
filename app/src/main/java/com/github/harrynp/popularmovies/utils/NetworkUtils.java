@@ -33,12 +33,12 @@ public final class NetworkUtils {
 
     public static URL buildUrl(String sortBy) {
         Uri builtUri;
-        if (sortBy == PARAM_SORT_POPULAR) {
+        if (sortBy.equals(PARAM_SORT_POPULAR)) {
             builtUri = Uri.parse(MOVIE_BASE_URL).buildUpon()
                     .appendPath(PARAM_SORT_POPULAR)
                     .appendQueryParameter(PARAM_API_KEY, BuildConfig.THE_MOVIE_DB_API_KEY)
                     .build();
-        } else if (sortBy == PARAM_SORT_TOP_RATED) {
+        } else if (sortBy.equals(PARAM_SORT_TOP_RATED)) {
             builtUri = Uri.parse(MOVIE_BASE_URL).buildUpon()
                     .appendPath(PARAM_SORT_TOP_RATED)
                     .appendQueryParameter(PARAM_API_KEY, BuildConfig.THE_MOVIE_DB_API_KEY)
@@ -47,6 +47,27 @@ public final class NetworkUtils {
             return null;
         }
         URL url = null;
+//        Log.v("NetworkUtils", builtUri.toString());
+        try {
+            url = new URL(builtUri.toString());
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+        return url;
+    }
+
+    public static URL buildURL(Integer movieID){
+        Uri builtUri;
+        if (movieID != null) {
+            builtUri = Uri.parse(MOVIE_BASE_URL).buildUpon()
+                    .appendPath(movieID.toString())
+                    .appendQueryParameter(PARAM_API_KEY, BuildConfig.THE_MOVIE_DB_API_KEY)
+                    .build();
+        } else {
+            return null;
+        }
+        URL url = null;
+//        Log.v("NetworkUtils MovieID", builtUri.toString());
         try {
             url = new URL(builtUri.toString());
         } catch (MalformedURLException e) {
@@ -63,39 +84,39 @@ public final class NetworkUtils {
         // Will contain the raw JSON response as a string.
         String moviesJsonString = null;
 
-            urlConnection.setRequestMethod("GET");
-            urlConnection.connect();
+        urlConnection.setRequestMethod("GET");
+        urlConnection.connect();
 
-            // Read the input stream into a String
-            InputStream inputStream = urlConnection.getInputStream();
-            StringBuffer buffer = new StringBuffer();
+        // Read the input stream into a String
+        InputStream inputStream = urlConnection.getInputStream();
+        StringBuffer buffer = new StringBuffer();
 
-            if (inputStream == null) {
-                // Nothing to do since nothing is there
-                return null;
-            }
+        if (inputStream == null) {
+            // Nothing to do since nothing is there
+            return null;
+        }
 
-            reader = new BufferedReader(new InputStreamReader(inputStream));
+        reader = new BufferedReader(new InputStreamReader(inputStream));
 
-            String line;
-            while ((line = reader.readLine()) != null) {
-                // Add new line for easier readability while debugging
-                buffer.append(line + "\n");
-            }
+        String line;
+        while ((line = reader.readLine()) != null) {
+            // Add new line for easier readability while debugging
+            buffer.append(line + "\n");
+        }
 
-            if (buffer.length() == 0) {
-                // Stream was empty.  No point in parsing.
-                return null;
-            }
+        if (buffer.length() == 0) {
+            // Stream was empty.  No point in parsing.
+            return null;
+        }
 
-            moviesJsonString = buffer.toString();
+        moviesJsonString = buffer.toString();
 
-            if (urlConnection != null) {
-                urlConnection.disconnect();
-            }
-            if (reader != null) {
-                reader.close();
-            }
+        if (urlConnection != null) {
+            urlConnection.disconnect();
+        }
+        if (reader != null) {
+            reader.close();
+        }
         return moviesJsonString;
     }
 }

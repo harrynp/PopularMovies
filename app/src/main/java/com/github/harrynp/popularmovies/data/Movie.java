@@ -29,7 +29,7 @@ public class Movie implements Parcelable {
             posterPath = movieInfo.getString("poster_path");
             backdropPath = movieInfo.getString("backdrop_path");
             overview = movieInfo.getString("overview");
-            rating = movieInfo.getDouble("rating");
+            rating = movieInfo.getDouble("vote_average");
             releaseDate = movieInfo.getString("release_date");
             voteCount = movieInfo.getInt("vote_count");
 

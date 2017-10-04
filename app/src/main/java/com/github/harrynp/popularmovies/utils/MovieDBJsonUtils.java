@@ -25,4 +25,10 @@ public final class MovieDBJsonUtils {
         }
         return movies;
     }
+
+    public static Integer getMovieRuntimeFromJson(String movieJsonString) throws JSONException {
+        final String MOVIE_RUNTIME = "runtime";
+        JSONObject movieJson = new JSONObject(movieJsonString);
+        return movieJson.getInt(MOVIE_RUNTIME);
+    }
 }
