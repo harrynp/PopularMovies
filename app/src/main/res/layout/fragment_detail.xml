@@ -21,6 +21,7 @@
 
         <ImageView
             android:id="@+id/backdrop_imageview"
+            android:contentDescription="@string/backdropContentDescription"
             android:layout_width="0dp"
             android:layout_height="220dp"
             android:scaleType="centerCrop"
@@ -48,6 +49,8 @@
 
         <ImageView
             android:id="@+id/poster_imageview"
+            android:contentDescription="@string/posterContentDescription"
+            android:scaleType="centerCrop"
             android:layout_width="105dp"
             android:layout_height="130dp"
             android:layout_marginLeft="16dp"

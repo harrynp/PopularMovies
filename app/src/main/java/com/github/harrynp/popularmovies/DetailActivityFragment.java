@@ -15,6 +15,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
+import com.bumptech.glide.request.RequestOptions;
 import com.github.harrynp.popularmovies.data.Movie;
 import com.github.harrynp.popularmovies.utils.MovieDBJsonUtils;
 import com.github.harrynp.popularmovies.utils.NetworkUtils;
@@ -71,9 +73,17 @@ public class DetailActivityFragment extends Fragment {
             String backdropUrl = hq ? "http://image.tmdb.org/t/p/w1280/" + movie.getBackdropPath() : "http://image.tmdb.org/t/p/w300/" + movie.getBackdropPath();
             String posterUrl = hq ? "http://image.tmdb.org/t/p/w780/" + movie.getPosterPath() : "http://image.tmdb.org/t/p/w185/" + movie.getPosterPath();
 
-            Glide.with(getContext()).load(backdropUrl).into(backdropImage);
+            Glide.with(getContext())
+                    .load(backdropUrl)
+                    .transition(DrawableTransitionOptions.withCrossFade())
+                    .into(backdropImage);
             detailTitle.setText(movie.getMovieName());
-            Glide.with(getContext()).load(posterUrl).into(posterImage);
+            Glide.with(getContext())
+                    .load(posterUrl)
+                    .apply(new RequestOptions()
+                            .placeholder(R.mipmap.movie_placeholder))
+                    .transition(DrawableTransitionOptions.withCrossFade())
+                    .into(posterImage);
             detailReleaseDate.append(" " + movie.getReleaseDate());
             detailRating.append(" " + Double.toString(movie.getRating()) + "/10");
             detailVoteCount.setText(Integer.toString(movie.getVoteCount()) + " ratings");

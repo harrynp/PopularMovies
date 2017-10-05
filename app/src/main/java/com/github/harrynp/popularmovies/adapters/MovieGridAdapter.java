@@ -10,6 +10,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.bumptech.glide.request.RequestOptions;
 import com.github.harrynp.popularmovies.R;
 import com.github.harrynp.popularmovies.data.Movie;
@@ -48,7 +49,8 @@ public class MovieGridAdapter extends ArrayAdapter<Movie>{
         Glide.with(getContext())
                 .load(posterUrl)
                 .apply(new RequestOptions()
-                .placeholder(R.mipmap.movie_placeholder))
+                        .placeholder(R.mipmap.movie_placeholder))
+                .transition(DrawableTransitionOptions.withCrossFade())
                 .into(posterView);
         return convertView;
 
