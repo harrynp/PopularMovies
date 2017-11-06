@@ -2,6 +2,7 @@ package com.github.harrynp.popularmovies;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.databinding.DataBindingUtil;
 import android.os.AsyncTask;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
@@ -18,6 +19,7 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.bumptech.glide.request.RequestOptions;
 import com.github.harrynp.popularmovies.data.Movie;
+import com.github.harrynp.popularmovies.databinding.FragmentDetailBinding;
 import com.github.harrynp.popularmovies.utils.MovieDBJsonUtils;
 import com.github.harrynp.popularmovies.utils.NetworkUtils;
 
@@ -33,15 +35,7 @@ public class DetailActivityFragment extends Fragment {
     private static final String LOG_TAG = DetailActivityFragment.class.getSimpleName();
     public static final String MOVIE_DETAILS = "MOVIE_DETAILS";
     private Movie movie;
-
-    ImageView backdropImage;
-    TextView detailTitle;
-    ImageView posterImage;
-    TextView detailReleaseDate;
-    TextView detailRating;
-    TextView detailVoteCount;
-    TextView detailRuntime;
-    TextView detailOverview;
+    FragmentDetailBinding mBinding;
 
     public DetailActivityFragment() {
     }
@@ -55,45 +49,36 @@ public class DetailActivityFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
+        mBinding = DataBindingUtil.inflate(inflater, R.layout.fragment_detail, container, false);
         Intent detailIntent = getActivity().getIntent();
         if (detailIntent != null && detailIntent.hasExtra(MOVIE_DETAILS)) {
             SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getActivity());
             boolean hq = sharedPref.getBoolean(getString(R.string.pref_hq_key), false);
             movie = detailIntent.getParcelableExtra(MOVIE_DETAILS);
             int movieId = movie.getMovieId();
-            backdropImage = (ImageView) rootView.findViewById(R.id.backdrop_imageview);
-            detailTitle = (TextView) rootView.findViewById(R.id.detail_title);
-            posterImage = (ImageView) rootView.findViewById(R.id.poster_imageview);
-            detailReleaseDate = (TextView) rootView.findViewById(R.id.detail_release_date);
-            detailRating = (TextView) rootView.findViewById(R.id.detail_rating);
-            detailVoteCount = (TextView) rootView.findViewById(R.id.detail_vote_count);
-            detailRuntime = (TextView) rootView.findViewById(R.id.detail_runtime);
-            detailOverview = (TextView) rootView.findViewById(R.id.detail_overview);
             String backdropUrl = hq ? "http://image.tmdb.org/t/p/w1280/" + movie.getBackdropPath() : "http://image.tmdb.org/t/p/w300/" + movie.getBackdropPath();
             String posterUrl = hq ? "http://image.tmdb.org/t/p/w780/" + movie.getPosterPath() : "http://image.tmdb.org/t/p/w185/" + movie.getPosterPath();
 
             Glide.with(getContext())
                     .load(backdropUrl)
                     .transition(DrawableTransitionOptions.withCrossFade())
-                    .into(backdropImage);
-            detailTitle.setText(movie.getMovieName());
+                    .into(mBinding.backdropImageview);
+            mBinding.detailTitle.setText(movie.getMovieName());
             Glide.with(getContext())
                     .load(posterUrl)
                     .apply(new RequestOptions()
                             .placeholder(R.mipmap.movie_placeholder))
                     .transition(DrawableTransitionOptions.withCrossFade())
-                    .into(posterImage);
-            detailReleaseDate.append(" " + movie.getReleaseDate());
-            detailRating.append(" " + Double.toString(movie.getRating()) + "/10");
-            detailVoteCount.setText(Integer.toString(movie.getVoteCount()) + " ratings");
-            detailOverview.setText(movie.getOverview());
+                    .into(mBinding.posterImageview);
+            mBinding.detailReleaseDate.append(" " + movie.getReleaseDate());
+            mBinding.detailRating.append(" " + Double.toString(movie.getRating()) + "/10");
+            mBinding.detailRating.setText(Integer.toString(movie.getVoteCount()) + " ratings");
+            mBinding.detailOverview.setText(movie.getOverview());
             FetchRuntimeTask runtimeTask = new FetchRuntimeTask();
             runtimeTask.execute(movieId);
 
         }
-
-        return rootView;
+        return mBinding.getRoot();
     }
 
     public class FetchRuntimeTask extends AsyncTask<Integer, Void, Integer> {
@@ -127,9 +112,9 @@ public class DetailActivityFragment extends Fragment {
         @Override
         protected void onPostExecute(Integer integer) {
             if (integer != null){
-                detailRuntime.append(" " + integer + " minutes");
+                mBinding.detailRuntime.append(" " + integer + " minutes");
             } else {
-                detailRuntime.append(" N/A");
+                mBinding.detailRuntime.append(" N/A");
             }
         }
     }

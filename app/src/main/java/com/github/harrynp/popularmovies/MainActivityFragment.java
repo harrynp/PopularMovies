@@ -3,6 +3,7 @@ package com.github.harrynp.popularmovies;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.databinding.DataBindingUtil;
 import android.net.ConnectivityManager;
 import android.os.AsyncTask;
 import android.preference.PreferenceManager;
@@ -18,12 +19,10 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.GridView;
-import android.widget.ProgressBar;
-import android.widget.TextView;
 
 import com.github.harrynp.popularmovies.adapters.MovieGridAdapter;
 import com.github.harrynp.popularmovies.data.Movie;
+import com.github.harrynp.popularmovies.databinding.FragmentMainBinding;
 import com.github.harrynp.popularmovies.utils.MovieDBJsonUtils;
 import com.github.harrynp.popularmovies.utils.NetworkUtils;
 
@@ -39,11 +38,7 @@ import java.util.ArrayList;
 public class MainActivityFragment extends Fragment {
 
     private MovieGridAdapter moviesAdapter;
-    private TextView mErrorMessageTextView;
-    private ProgressBar mLoadingIndicator;
-    private GridView mGridViewMovies;
-    private SwipeRefreshLayout mSwipeContainer;
-
+    private FragmentMainBinding mBinding;
 
     public MainActivityFragment() {
     }
@@ -51,7 +46,6 @@ public class MainActivityFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         setHasOptionsMenu(true);
-        
         super.onCreate(savedInstanceState);
     }
 
@@ -60,20 +54,16 @@ public class MainActivityFragment extends Fragment {
                              Bundle savedInstanceState) {
         moviesAdapter = new MovieGridAdapter(getActivity(), new ArrayList<Movie>());
 
-        View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-        mErrorMessageTextView = (TextView) rootView.findViewById(R.id.tv_error_message_display);
-        mLoadingIndicator = (ProgressBar) rootView.findViewById(R.id.pb_loading_indicator);
+        mBinding = DataBindingUtil.inflate(inflater, R.layout.fragment_main, container, false);
         //Implemented swipe to refresh
-        mSwipeContainer = (SwipeRefreshLayout) rootView.findViewById(R.id.swiperefresh);
-        mSwipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener(){
+        mBinding.swiperefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener(){
             @Override
             public void onRefresh() {
                 updateMovies();
             }
         });
-        mGridViewMovies = (GridView) rootView.findViewById(R.id.gridview_movies);
-        mGridViewMovies.setAdapter(moviesAdapter);
-        mGridViewMovies.setOnItemClickListener(new AdapterView.OnItemClickListener(){
+        mBinding.gridviewMovies.setAdapter(moviesAdapter);
+        mBinding.gridviewMovies.setOnItemClickListener(new AdapterView.OnItemClickListener(){
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Movie movie = moviesAdapter.getItem(position);
@@ -82,7 +72,7 @@ public class MainActivityFragment extends Fragment {
                 startActivity(detailIntent);
             }
         });
-        return rootView;
+        return mBinding.getRoot();
     }
 
     @Override
@@ -108,12 +98,12 @@ public class MainActivityFragment extends Fragment {
     }
 
     private void showGridView(){
-        mErrorMessageTextView.setVisibility(View.INVISIBLE);
-        mGridViewMovies.setVisibility(View.VISIBLE);
+        mBinding.tvErrorMessageDisplay.setVisibility(View.INVISIBLE);
+        mBinding.gridviewMovies.setVisibility(View.VISIBLE);
     }
     private void showErrorMessage(){
-        mGridViewMovies.setVisibility(View.INVISIBLE);
-        mErrorMessageTextView.setVisibility(View.VISIBLE);
+        mBinding.gridviewMovies.setVisibility(View.INVISIBLE);
+        mBinding.tvErrorMessageDisplay.setVisibility(View.VISIBLE);
     }
 
     public boolean isOnline() {
@@ -131,7 +121,7 @@ public class MainActivityFragment extends Fragment {
             FetchMoviesTask moviesTask = new FetchMoviesTask();
             moviesTask.execute(sortOrder);
         } else {
-            mSwipeContainer.setRefreshing(false);
+            mBinding.swiperefresh.setRefreshing(false);
             showErrorMessage();
         }
     }
@@ -143,7 +133,7 @@ public class MainActivityFragment extends Fragment {
         protected void onPreExecute() {
             super.onPreExecute();
             showGridView();
-            mLoadingIndicator.setVisibility(View.VISIBLE);
+            mBinding.pbLoadingIndicator.setVisibility(View.VISIBLE);
         }
 
         @Override
@@ -176,8 +166,8 @@ public class MainActivityFragment extends Fragment {
         @Override
         protected void onPostExecute(ArrayList<Movie> movies) {
             //If there is new data from the JSON object
-            mLoadingIndicator.setVisibility(View.INVISIBLE);
-            mSwipeContainer.setRefreshing(false);
+            mBinding.pbLoadingIndicator.setVisibility(View.INVISIBLE);
+            mBinding.swiperefresh.setRefreshing(false);
             if (movies != null){
                 showGridView();
                 moviesAdapter.clear();

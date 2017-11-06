@@ -22,8 +22,6 @@ import java.util.List;
  */
 
 public class MovieGridAdapter extends ArrayAdapter<Movie>{
-    private static final String LOG_TAG = MovieGridAdapter.class.getSimpleName();
-
     public MovieGridAdapter(Context context, List<Movie> movies) {
         super(context, 0, movies);
     }
