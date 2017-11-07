@@ -18,11 +18,11 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 
-import com.github.harrynp.popularmovies.adapters.MovieGridAdapter;
+import com.github.harrynp.popularmovies.adapters.MoviesAdapter;
 import com.github.harrynp.popularmovies.data.Movie;
 import com.github.harrynp.popularmovies.databinding.FragmentMainBinding;
+import com.github.harrynp.popularmovies.utils.GridAutofitLayoutManager;
 import com.github.harrynp.popularmovies.utils.MovieDBJsonUtils;
 import com.github.harrynp.popularmovies.utils.NetworkUtils;
 
@@ -35,9 +35,9 @@ import java.util.ArrayList;
 /**
  * A placeholder fragment containing a simple view.
  */
-public class MainActivityFragment extends Fragment {
+public class MainActivityFragment extends Fragment implements MoviesAdapter.MoviesAdapterOnClickHandler{
 
-    private MovieGridAdapter moviesAdapter;
+    private MoviesAdapter moviesAdapter;
     private FragmentMainBinding mBinding;
 
     public MainActivityFragment() {
@@ -52,7 +52,7 @@ public class MainActivityFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        moviesAdapter = new MovieGridAdapter(getActivity(), new ArrayList<Movie>());
+        moviesAdapter = new MoviesAdapter(getContext(), this, new ArrayList<Movie>());
 
         mBinding = DataBindingUtil.inflate(inflater, R.layout.fragment_main, container, false);
         //Implemented swipe to refresh
@@ -62,16 +62,10 @@ public class MainActivityFragment extends Fragment {
                 updateMovies();
             }
         });
-        mBinding.gridviewMovies.setAdapter(moviesAdapter);
-        mBinding.gridviewMovies.setOnItemClickListener(new AdapterView.OnItemClickListener(){
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Movie movie = moviesAdapter.getItem(position);
-                Intent detailIntent = new Intent(getActivity(), DetailActivity.class);
-                detailIntent.putExtra(DetailActivityFragment.MOVIE_DETAILS, movie);
-                startActivity(detailIntent);
-            }
-        });
+        GridAutofitLayoutManager layoutManager = new GridAutofitLayoutManager(getContext(), 600);
+        mBinding.recyclerviewMovies.setLayoutManager(layoutManager);
+        mBinding.recyclerviewMovies.setHasFixedSize(false);
+        mBinding.recyclerviewMovies.setAdapter(moviesAdapter);
         return mBinding.getRoot();
     }
 
@@ -99,10 +93,10 @@ public class MainActivityFragment extends Fragment {
 
     private void showGridView(){
         mBinding.tvErrorMessageDisplay.setVisibility(View.INVISIBLE);
-        mBinding.gridviewMovies.setVisibility(View.VISIBLE);
+        mBinding.recyclerviewMovies.setVisibility(View.VISIBLE);
     }
     private void showErrorMessage(){
-        mBinding.gridviewMovies.setVisibility(View.INVISIBLE);
+        mBinding.recyclerviewMovies.setVisibility(View.INVISIBLE);
         mBinding.tvErrorMessageDisplay.setVisibility(View.VISIBLE);
     }
 
@@ -124,6 +118,14 @@ public class MainActivityFragment extends Fragment {
             mBinding.swiperefresh.setRefreshing(false);
             showErrorMessage();
         }
+    }
+
+
+    @Override
+    public void onClick(Movie movie) {
+        Intent detailIntent = new Intent(getActivity(), DetailActivity.class);
+        detailIntent.putExtra(DetailActivityFragment.MOVIE_DETAILS, movie);
+        startActivity(detailIntent);
     }
 
     public class FetchMoviesTask extends AsyncTask<String, Void, ArrayList<Movie>>{
@@ -172,7 +174,7 @@ public class MainActivityFragment extends Fragment {
                 showGridView();
                 moviesAdapter.clear();
                 for (Movie movie : movies){
-                    moviesAdapter.add(movie);
+                    moviesAdapter.addMovie(movie);
                 }
             } else {
                 showErrorMessage();
