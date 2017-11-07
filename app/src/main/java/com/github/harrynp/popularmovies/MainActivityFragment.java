@@ -1,16 +1,20 @@
 package com.github.harrynp.popularmovies;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.databinding.DataBindingUtil;
 import android.net.ConnectivityManager;
-import android.os.AsyncTask;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.AsyncTaskLoader;
+import android.support.v4.content.Loader;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -35,10 +39,14 @@ import java.util.ArrayList;
 /**
  * A placeholder fragment containing a simple view.
  */
-public class MainActivityFragment extends Fragment implements MoviesAdapter.MoviesAdapterOnClickHandler{
+public class MainActivityFragment extends Fragment implements MoviesAdapter.MoviesAdapterOnClickHandler,
+        LoaderManager.LoaderCallbacks<ArrayList<Movie>>{
+    private final String LOG_TAG = MainActivityFragment.class.getSimpleName();
 
     private MoviesAdapter moviesAdapter;
     private FragmentMainBinding mBinding;
+    private static final String SORT_ORDER_EXTRA = "sort";
+    private static final int FETCH_MOVIE_LOADER = 23;
 
     public MainActivityFragment() {
     }
@@ -62,9 +70,9 @@ public class MainActivityFragment extends Fragment implements MoviesAdapter.Movi
                 updateMovies();
             }
         });
-        GridAutofitLayoutManager layoutManager = new GridAutofitLayoutManager(getContext(), 600);
+        GridAutofitLayoutManager layoutManager = new GridAutofitLayoutManager(getContext(), 500);
         mBinding.recyclerviewMovies.setLayoutManager(layoutManager);
-        mBinding.recyclerviewMovies.setHasFixedSize(false);
+        mBinding.recyclerviewMovies.setHasFixedSize(true);
         mBinding.recyclerviewMovies.setAdapter(moviesAdapter);
         return mBinding.getRoot();
     }
@@ -112,8 +120,9 @@ public class MainActivityFragment extends Fragment implements MoviesAdapter.Movi
         if(isOnline()) {
             SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getActivity());
             String sortOrder = sharedPref.getString(getString(R.string.pref_sort_key), getString(R.string.pref_sort_popular));
-            FetchMoviesTask moviesTask = new FetchMoviesTask();
-            moviesTask.execute(sortOrder);
+            Bundle sortBundle = new Bundle();
+            sortBundle.putString(SORT_ORDER_EXTRA, sortOrder);
+            getActivity().getSupportLoaderManager().restartLoader(FETCH_MOVIE_LOADER, sortBundle, this);
         } else {
             mBinding.swiperefresh.setRefreshing(false);
             showErrorMessage();
@@ -128,57 +137,74 @@ public class MainActivityFragment extends Fragment implements MoviesAdapter.Movi
         startActivity(detailIntent);
     }
 
-    public class FetchMoviesTask extends AsyncTask<String, Void, ArrayList<Movie>>{
-        private final String LOG_TAG = FetchMoviesTask.class.getSimpleName();
+    @SuppressLint("StaticFieldLeak")
+    @Override
+    public Loader<ArrayList<Movie>> onCreateLoader(int id, final Bundle args) {
+        return new AsyncTaskLoader<ArrayList<Movie>>(getContext()) {
 
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            showGridView();
-            mBinding.pbLoadingIndicator.setVisibility(View.VISIBLE);
-        }
-
-        @Override
-        protected ArrayList<Movie> doInBackground(String... strings) {
-            String moviesJsonString;
-
-            // Verify there's a sort order.
-            if (strings.length == 0){
-                return null;
+            @Override
+            protected void onStartLoading() {
+                super.onStartLoading();
+                //No sort order
+                if (args == null){
+                    return;
+                }
+                showGridView();
+                mBinding.pbLoadingIndicator.setVisibility(View.VISIBLE);
+                forceLoad();
             }
-            URL url = NetworkUtils.buildUrl(strings[0]);
-            if (url != null) {
-                try {
-                    moviesJsonString = NetworkUtils.getResponseFromHttpUrl(url);
-                } catch (IOException e) {
-                    Log.e(LOG_TAG, e.getMessage(), e);
+
+            @Override
+            public ArrayList<Movie> loadInBackground() {
+                String sortOrder = args.getString(SORT_ORDER_EXTRA);
+                // Verify there's a sort order.
+                if (sortOrder == null || TextUtils.isEmpty(sortOrder)) {
                     return null;
                 }
-                try {
-                    return MovieDBJsonUtils.getMovieDataFromJson(moviesJsonString);
-                } catch (JSONException e) {
-                    Log.e(LOG_TAG, e.getMessage(), e);
-                }
-            }
+                String moviesJsonString;
 
-            // This will only happen if there was an error getting or parsing the movies.
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(ArrayList<Movie> movies) {
-            //If there is new data from the JSON object
-            mBinding.pbLoadingIndicator.setVisibility(View.INVISIBLE);
-            mBinding.swiperefresh.setRefreshing(false);
-            if (movies != null){
-                showGridView();
-                moviesAdapter.clear();
-                for (Movie movie : movies){
-                    moviesAdapter.addMovie(movie);
+                URL url = NetworkUtils.buildUrl(sortOrder);
+                if (url != null) {
+                    try {
+                        moviesJsonString = NetworkUtils.getResponseFromHttpUrl(url);
+                    } catch (IOException e) {
+                        Log.e(LOG_TAG, e.getMessage(), e);
+                        return null;
+                    }
+                    try {
+                        return MovieDBJsonUtils.getMovieDataFromJson(moviesJsonString);
+                    } catch (JSONException e) {
+                        Log.e(LOG_TAG, e.getMessage(), e);
+                    }
                 }
-            } else {
-                showErrorMessage();
+                // This will only happen if there was an error getting or parsing the movies.
+                return null;
             }
+        };
+    }
+
+    @Override
+    public void onLoadFinished(Loader<ArrayList<Movie>> loader, ArrayList<Movie> movies) {
+        //If there is new data from the JSON object
+        mBinding.pbLoadingIndicator.setVisibility(View.INVISIBLE);
+        mBinding.swiperefresh.setRefreshing(false);
+        if (movies != null){
+            showGridView();
+            moviesAdapter.clear();
+            for (Movie movie : movies){
+                moviesAdapter.addMovie(movie);
+            }
+        } else {
+            showErrorMessage();
         }
+    }
+
+    @Override
+    public void onLoaderReset(Loader<ArrayList<Movie>> loader) {
+        /*
+         * Since this Loader's data is now invalid, we need to clear the Adapter that is
+         * displaying the data.
+         */
+        moviesAdapter.clear();
     }
 }

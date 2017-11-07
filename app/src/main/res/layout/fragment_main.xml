@@ -28,15 +28,11 @@
             android:id="@+id/swiperefresh"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
-            <GridView
-                android:id="@+id/gridview_movies"
+            <android.support.v7.widget.RecyclerView
+                android:id="@+id/recyclerview_movies"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:numColumns="auto_fit"
-                android:stretchMode="columnWidth"
-                android:gravity="center"
-                android:drawSelectorOnTop="true"
-                android:columnWidth="175dp" />
+                android:drawSelectorOnTop="true" />
         </android.support.v4.widget.SwipeRefreshLayout>
     </FrameLayout>
 </layout>
