@@ -5,7 +5,6 @@ package com.github.harrynp.popularmovies.utils;
  */
 
 import android.net.Uri;
-import android.util.Log;
 
 import com.github.harrynp.popularmovies.BuildConfig;
 
@@ -15,6 +14,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
 
 /**
@@ -56,18 +56,23 @@ public final class NetworkUtils {
         return url;
     }
 
-    public static URL buildURL(Integer movieID){
+    public static URL buildURL(Integer movieID, String path){
         Uri builtUri;
-        if (movieID != null) {
+        if (movieID != null && path == null) {
             builtUri = Uri.parse(MOVIE_BASE_URL).buildUpon()
                     .appendPath(movieID.toString())
+                    .appendQueryParameter(PARAM_API_KEY, BuildConfig.THE_MOVIE_DB_API_KEY)
+                    .build();
+        } else if (movieID != null && path != null){
+            builtUri = Uri.parse(MOVIE_BASE_URL).buildUpon()
+                    .appendPath(movieID.toString())
+                    .appendPath(path)
                     .appendQueryParameter(PARAM_API_KEY, BuildConfig.THE_MOVIE_DB_API_KEY)
                     .build();
         } else {
             return null;
         }
         URL url = null;
-//        Log.v("NetworkUtils MovieID", builtUri.toString());
         try {
             url = new URL(builtUri.toString());
         } catch (MalformedURLException e) {

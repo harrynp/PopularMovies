@@ -20,13 +20,14 @@ android {
     }
     buildTypes.each {
         it.buildConfigField 'String', 'THE_MOVIE_DB_API_KEY', "\"{MOVIE_DB_API_KEY}\""
+        it.buildConfigField 'String', 'YOUTUBE_DEVELOPER_API_KEY', "\"{YOUTUBE_API_KEY}\""
     }
 
     dataBinding.enabled = true
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile fileTree(include: ['*.jar'], dir: 'libs')
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
@@ -39,6 +40,7 @@ dependencies {
     compile 'com.android.support:recyclerview-v7:27.0.0'
     testCompile 'junit:junit:4.12'
     annotationProcessor 'com.github.bumptech.glide:compiler:4.3.0'
+    implementation files('libs/YouTubeAndroidPlayerApi.jar')
 }
 
 

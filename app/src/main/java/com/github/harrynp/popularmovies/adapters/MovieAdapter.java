@@ -19,20 +19,21 @@ import com.github.harrynp.popularmovies.data.Movie;
 import com.github.harrynp.popularmovies.databinding.GridItemMovieBinding;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by harry on 9/26/2017.
  */
 
-public class MoviesAdapter extends RecyclerView.Adapter<MoviesAdapter.MoviesAdapterViewHolder>{
+public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieAdapterViewHolder>{
 
 
     private final Context mContext;
-    final private MoviesAdapterOnClickHandler mClickHandler;
+    final private MovieAdapterOnClickHandler mClickHandler;
     private GridItemMovieBinding mBinding;
-    private ArrayList<Movie> mMovieList;
+    private List<Movie> mMovieList;
 
-    public interface MoviesAdapterOnClickHandler {
+    public interface MovieAdapterOnClickHandler {
         void onClick(Movie movie);
     }
 
@@ -47,20 +48,20 @@ public class MoviesAdapter extends RecyclerView.Adapter<MoviesAdapter.MoviesAdap
         notifyDataSetChanged();
     }
 
-    public MoviesAdapter(@NonNull Context context, MoviesAdapterOnClickHandler clickHandler, ArrayList<Movie> movies) {
+    public MovieAdapter(@NonNull Context context, MovieAdapterOnClickHandler clickHandler) {
         mContext = context;
         mClickHandler = clickHandler;
-        mMovieList = movies;
+        mMovieList = new ArrayList<>();
     }
 
     @Override
-    public MoviesAdapterViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    public MovieAdapterViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         mBinding = DataBindingUtil.inflate(LayoutInflater.from(mContext), R.layout.grid_item_movie, parent, false);
-        return new MoviesAdapterViewHolder(mBinding.getRoot());
+        return new MovieAdapterViewHolder(mBinding.getRoot());
     }
 
     @Override
-    public void onBindViewHolder(MoviesAdapterViewHolder holder, int position) {
+    public void onBindViewHolder(MovieAdapterViewHolder holder, int position) {
         Movie movie = mMovieList.get(position);
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(mContext);
         boolean hq = sharedPref.getBoolean(mContext.getString(R.string.pref_hq_key), false);
@@ -78,11 +79,11 @@ public class MoviesAdapter extends RecyclerView.Adapter<MoviesAdapter.MoviesAdap
         return mMovieList.size();
     }
 
-    class MoviesAdapterViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
+    class MovieAdapterViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
 
         final ImageView posterView;
 
-        MoviesAdapterViewHolder(View itemView) {
+        MovieAdapterViewHolder(View itemView) {
             super(itemView);
             posterView = mBinding.gridItemImageview;
             itemView.setOnClickListener(this);

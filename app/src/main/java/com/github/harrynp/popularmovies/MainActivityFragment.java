@@ -23,7 +23,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.github.harrynp.popularmovies.adapters.MoviesAdapter;
+import com.github.harrynp.popularmovies.adapters.MovieAdapter;
 import com.github.harrynp.popularmovies.data.Movie;
 import com.github.harrynp.popularmovies.databinding.FragmentMainBinding;
 import com.github.harrynp.popularmovies.utils.GridAutofitLayoutManager;
@@ -39,11 +39,11 @@ import java.util.ArrayList;
 /**
  * A placeholder fragment containing a simple view.
  */
-public class MainActivityFragment extends Fragment implements MoviesAdapter.MoviesAdapterOnClickHandler,
-        LoaderManager.LoaderCallbacks<ArrayList<Movie>>{
+public class MainActivityFragment extends Fragment implements MovieAdapter.MovieAdapterOnClickHandler,
+        LoaderManager.LoaderCallbacks<Movie[]>{
     private final String LOG_TAG = MainActivityFragment.class.getSimpleName();
 
-    private MoviesAdapter moviesAdapter;
+    private MovieAdapter movieAdapter;
     private FragmentMainBinding mBinding;
     private static final String SORT_ORDER_EXTRA = "sort";
     private static final int FETCH_MOVIE_LOADER = 23;
@@ -60,7 +60,7 @@ public class MainActivityFragment extends Fragment implements MoviesAdapter.Movi
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        moviesAdapter = new MoviesAdapter(getContext(), this, new ArrayList<Movie>());
+        movieAdapter = new MovieAdapter(getContext(), this);
 
         mBinding = DataBindingUtil.inflate(inflater, R.layout.fragment_main, container, false);
         //Implemented swipe to refresh
@@ -70,10 +70,10 @@ public class MainActivityFragment extends Fragment implements MoviesAdapter.Movi
                 updateMovies();
             }
         });
-        GridAutofitLayoutManager layoutManager = new GridAutofitLayoutManager(getContext(), 500);
+        GridAutofitLayoutManager layoutManager = new GridAutofitLayoutManager(getContext(), 700);
         mBinding.recyclerviewMovies.setLayoutManager(layoutManager);
         mBinding.recyclerviewMovies.setHasFixedSize(true);
-        mBinding.recyclerviewMovies.setAdapter(moviesAdapter);
+        mBinding.recyclerviewMovies.setAdapter(movieAdapter);
         return mBinding.getRoot();
     }
 
@@ -139,8 +139,8 @@ public class MainActivityFragment extends Fragment implements MoviesAdapter.Movi
 
     @SuppressLint("StaticFieldLeak")
     @Override
-    public Loader<ArrayList<Movie>> onCreateLoader(int id, final Bundle args) {
-        return new AsyncTaskLoader<ArrayList<Movie>>(getContext()) {
+    public Loader<Movie[]> onCreateLoader(int id, final Bundle args) {
+        return new AsyncTaskLoader<Movie[]>(getContext()) {
 
             @Override
             protected void onStartLoading() {
@@ -155,7 +155,7 @@ public class MainActivityFragment extends Fragment implements MoviesAdapter.Movi
             }
 
             @Override
-            public ArrayList<Movie> loadInBackground() {
+            public Movie[] loadInBackground() {
                 String sortOrder = args.getString(SORT_ORDER_EXTRA);
                 // Verify there's a sort order.
                 if (sortOrder == null || TextUtils.isEmpty(sortOrder)) {
@@ -184,15 +184,16 @@ public class MainActivityFragment extends Fragment implements MoviesAdapter.Movi
     }
 
     @Override
-    public void onLoadFinished(Loader<ArrayList<Movie>> loader, ArrayList<Movie> movies) {
+    public void onLoadFinished(Loader<Movie[]> loader, Movie[] movies) {
         //If there is new data from the JSON object
         mBinding.pbLoadingIndicator.setVisibility(View.INVISIBLE);
         mBinding.swiperefresh.setRefreshing(false);
         if (movies != null){
+            mBinding.recyclerviewMovies.smoothScrollToPosition(0);
             showGridView();
-            moviesAdapter.clear();
+            movieAdapter.clear();
             for (Movie movie : movies){
-                moviesAdapter.addMovie(movie);
+                movieAdapter.addMovie(movie);
             }
         } else {
             showErrorMessage();
@@ -200,11 +201,11 @@ public class MainActivityFragment extends Fragment implements MoviesAdapter.Movi
     }
 
     @Override
-    public void onLoaderReset(Loader<ArrayList<Movie>> loader) {
+    public void onLoaderReset(Loader<Movie[]> loader) {
         /*
          * Since this Loader's data is now invalid, we need to clear the Adapter that is
          * displaying the data.
          */
-        moviesAdapter.clear();
+        movieAdapter.clear();
     }
 }
