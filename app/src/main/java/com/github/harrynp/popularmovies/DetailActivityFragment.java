@@ -34,7 +34,6 @@ import com.github.harrynp.popularmovies.data.Trailer;
 import com.github.harrynp.popularmovies.databinding.FragmentDetailBinding;
 import com.github.harrynp.popularmovies.utils.MovieDBJsonUtils;
 import com.github.harrynp.popularmovies.utils.NetworkUtils;
-import com.google.android.youtube.player.YouTubeIntents;
 import com.google.android.youtube.player.YouTubeStandalonePlayer;
 
 import org.json.JSONException;
@@ -112,8 +111,10 @@ public class DetailActivityFragment extends Fragment implements TrailerAdapter.T
             mBinding.recyclerviewTrailers.setAdapter(trailerAdapter);
             reviewAdapter = new ReviewAdapter(getContext());
             LinearLayoutManager reviewsLayoutManager = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
+            reviewsLayoutManager.setAutoMeasureEnabled(true);
             mBinding.recyclerviewReviews.setLayoutManager(reviewsLayoutManager);
             mBinding.recyclerviewReviews.setAdapter(reviewAdapter);
+            mBinding.recyclerviewReviews.setNestedScrollingEnabled(false);
         }
         return mBinding.getRoot();
     }
