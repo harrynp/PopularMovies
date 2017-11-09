@@ -15,7 +15,7 @@
             <!--android:key="@string/pref_theme_key"-->
             <!--android:title="@string/pref_theme_label" />-->
         <CheckBoxPreference
-            android:defaultValue="false"
+            android:defaultValue="true"
             android:key="@string/pref_hq_key"
             android:title="@string/pref_hq_label" />
     </PreferenceCategory>
