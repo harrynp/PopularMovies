@@ -2,12 +2,6 @@
     <PreferenceCategory
         android:title="@string/pref_header_general"
         android:key="@string/pref_key_general">
-        <ListPreference
-            android:defaultValue="@string/pref_sort_popular"
-            android:entries="@array/pref_sort_options"
-            android:entryValues="@array/pref_sort_values"
-            android:key="@string/pref_sort_key"
-            android:title="@string/pref_sort_label" />
         <!--<ListPreference-->
             <!--android:defaultValue="@string/pref_theme_light"-->
             <!--android:entries="@array/pref_theme_options"-->

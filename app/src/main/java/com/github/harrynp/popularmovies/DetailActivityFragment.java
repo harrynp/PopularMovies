@@ -13,6 +13,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Parcelable;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
@@ -35,9 +36,7 @@ import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.bumptech.glide.request.RequestOptions;
 import com.github.harrynp.popularmovies.adapters.ReviewAdapter;
 import com.github.harrynp.popularmovies.adapters.TrailerAdapter;
-import com.github.harrynp.popularmovies.data.FavoritesContentProvider;
 import com.github.harrynp.popularmovies.data.FavoritesContract;
-import com.github.harrynp.popularmovies.data.FavoritesDbHelper;
 import com.github.harrynp.popularmovies.data.Movie;
 import com.github.harrynp.popularmovies.data.Review;
 import com.github.harrynp.popularmovies.data.Trailer;
@@ -67,6 +66,7 @@ public class DetailActivityFragment extends Fragment implements TrailerAdapter.T
     private static final String MOVIE_TRAILERS_EXTRA = "trailers";
     private static final String MOVIE_REVIEWS_EXTRA = "reviews";
     public static final String MOVIE_DETAILS = "MOVIE_DETAILS";
+    private static final String SCROLL_POSITION = "scroll_position";
     private TrailerAdapter trailerAdapter;
     private ReviewAdapter reviewAdapter;
     private Movie movie;
@@ -84,17 +84,20 @@ public class DetailActivityFragment extends Fragment implements TrailerAdapter.T
                     return new AsyncTaskLoader<Boolean>(getContext()) {
                         @Override
                         public Boolean loadInBackground() {
-                            ContentValues contentValues = new ContentValues();
-                            contentValues.put(FavoritesContract.FavoritesEntry.COLUMN_TITLE, movie.getMovieName());
-                            contentValues.put(FavoritesContract.FavoritesEntry.COLUMN_MOVIE_ID, movie.getMovieId());
-                            contentValues.put(FavoritesContract.FavoritesEntry.COLUMN_POSTER_PATH, movie.getPosterPath());
-                            contentValues.put(FavoritesContract.FavoritesEntry.COLUMN_BACKDROP_PATH, movie.getBackdropPath());
-                            contentValues.put(FavoritesContract.FavoritesEntry.COLUMN_OVERVIEW, movie.getOverview());
-                            contentValues.put(FavoritesContract.FavoritesEntry.COLUMN_VOTE_AVERAGE, movie.getRating());
-                            contentValues.put(FavoritesContract.FavoritesEntry.COLUMN_RELEASE_DATE, movie.getReleaseDate());
-                            contentValues.put(FavoritesContract.FavoritesEntry.COLUMN_VOTE_COUNT, movie.getVoteCount());
-                            getContext().getContentResolver().insert(FavoritesContract.FavoritesEntry.CONTENT_URI, contentValues);
-                            return true;
+                            if (movie != null) {
+                                ContentValues contentValues = new ContentValues();
+                                contentValues.put(FavoritesContract.FavoritesEntry.COLUMN_TITLE, movie.getMovieName());
+                                contentValues.put(FavoritesContract.FavoritesEntry.COLUMN_MOVIE_ID, movie.getMovieId());
+                                contentValues.put(FavoritesContract.FavoritesEntry.COLUMN_POSTER_PATH, movie.getPosterPath());
+                                contentValues.put(FavoritesContract.FavoritesEntry.COLUMN_BACKDROP_PATH, movie.getBackdropPath());
+                                contentValues.put(FavoritesContract.FavoritesEntry.COLUMN_OVERVIEW, movie.getOverview());
+                                contentValues.put(FavoritesContract.FavoritesEntry.COLUMN_VOTE_AVERAGE, movie.getRating());
+                                contentValues.put(FavoritesContract.FavoritesEntry.COLUMN_RELEASE_DATE, movie.getReleaseDate());
+                                contentValues.put(FavoritesContract.FavoritesEntry.COLUMN_VOTE_COUNT, movie.getVoteCount());
+                                getContext().getContentResolver().insert(FavoritesContract.FavoritesEntry.CONTENT_URI, contentValues);
+                                return true;
+                            }
+                            return false;
                         }
                     };
 
@@ -118,10 +121,11 @@ public class DetailActivityFragment extends Fragment implements TrailerAdapter.T
 
         @Override
         public void onLoadFinished(Loader<Boolean> loader, Boolean data) {
+            favorited = data;
             if (data){
-                actionFavorite.setIcon(R.drawable.ic_star_black_24dp);
+                actionFavorite.setIcon(R.drawable.ic_star_white_24dp);
             } else {
-                actionFavorite.setIcon(R.drawable.ic_star_border_black_24dp);
+                actionFavorite.setIcon(R.drawable.ic_star_border_white_24dp);
             }
         }
 
@@ -132,6 +136,20 @@ public class DetailActivityFragment extends Fragment implements TrailerAdapter.T
     };
 
     public DetailActivityFragment() {
+    }
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putIntArray(SCROLL_POSITION, new int[] {mBinding.detailLayout.getScrollX(), mBinding.detailLayout.getScrollY()});
+    }
+
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        if(savedInstanceState != null) {
+            mBinding.detailLayout.scrollTo(savedInstanceState.getIntArray(SCROLL_POSITION)[0], savedInstanceState.getIntArray(SCROLL_POSITION)[1]);
+        }
     }
 
     @Override
@@ -168,9 +186,9 @@ public class DetailActivityFragment extends Fragment implements TrailerAdapter.T
                 protected void onPostExecute(Boolean isFavorited) {
                     favorited = isFavorited;
                     if (isFavorited){
-                        actionFavorite.setIcon(R.drawable.ic_star_black_24dp);
+                        actionFavorite.setIcon(R.drawable.ic_star_white_24dp);
                     } else {
-                        actionFavorite.setIcon(R.drawable.ic_star_border_black_24dp);
+                        actionFavorite.setIcon(R.drawable.ic_star_border_white_24dp);
                     }
                 }
             }.execute();
@@ -210,7 +228,6 @@ public class DetailActivityFragment extends Fragment implements TrailerAdapter.T
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         mBinding = DataBindingUtil.inflate(inflater, R.layout.fragment_detail, container, false);
-        mBinding.detailLayout.smoothScrollTo(0, 0);
         Intent detailIntent = getActivity().getIntent();
         if (detailIntent != null && detailIntent.hasExtra(MOVIE_DETAILS)) {
             SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getActivity());
@@ -248,12 +265,14 @@ public class DetailActivityFragment extends Fragment implements TrailerAdapter.T
             LinearLayoutManager trailersLayoutManager = new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false);
             mBinding.recyclerviewTrailers.setLayoutManager(trailersLayoutManager);
             mBinding.recyclerviewTrailers.setAdapter(trailerAdapter);
+            mBinding.recyclerviewTrailers.setFocusable(false);
             reviewAdapter = new ReviewAdapter(getContext());
             LinearLayoutManager reviewsLayoutManager = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
             reviewsLayoutManager.setAutoMeasureEnabled(true);
             mBinding.recyclerviewReviews.setLayoutManager(reviewsLayoutManager);
             mBinding.recyclerviewReviews.setAdapter(reviewAdapter);
             mBinding.recyclerviewReviews.setNestedScrollingEnabled(false);
+            mBinding.recyclerviewReviews.setFocusable(false);
         }
         return mBinding.getRoot();
     }

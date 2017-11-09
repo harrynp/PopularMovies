@@ -63,14 +63,16 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieAdapter
     @Override
     public void onBindViewHolder(MovieAdapterViewHolder holder, int position) {
         Movie movie = mMovieList.get(position);
-        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(mContext);
-        boolean hq = sharedPref.getBoolean(mContext.getString(R.string.pref_hq_key), true);
-        String posterUrl = hq ? "http://image.tmdb.org/t/p/w780/" + movie.getPosterPath() : "http://image.tmdb.org/t/p/w185/" + movie.getPosterPath();
-        Glide.with(mContext)
-                .load(posterUrl)
-                .apply(new RequestOptions())
-                .transition(DrawableTransitionOptions.withCrossFade())
-                .into(holder.posterView);
+        if(movie != null) {
+            SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(mContext);
+            boolean hq = sharedPref.getBoolean(mContext.getString(R.string.pref_hq_key), true);
+            String posterUrl = hq ? "http://image.tmdb.org/t/p/w780/" + movie.getPosterPath() : "http://image.tmdb.org/t/p/w185/" + movie.getPosterPath();
+            Glide.with(mContext)
+                    .load(posterUrl)
+                    .apply(new RequestOptions())
+                    .transition(DrawableTransitionOptions.withCrossFade())
+                    .into(holder.posterView);
+        }
     }
 
     @Override

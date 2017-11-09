@@ -13,7 +13,6 @@ import android.support.v4.app.Fragment;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
-import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.text.TextUtils;
@@ -27,7 +26,6 @@ import android.view.ViewGroup;
 
 import com.github.harrynp.popularmovies.adapters.MovieAdapter;
 import com.github.harrynp.popularmovies.data.FavoritesContract;
-import com.github.harrynp.popularmovies.data.FavoritesDbHelper;
 import com.github.harrynp.popularmovies.data.Movie;
 import com.github.harrynp.popularmovies.databinding.FragmentMainBinding;
 import com.github.harrynp.popularmovies.utils.GridAutofitLayoutManager;
@@ -38,27 +36,98 @@ import org.json.JSONException;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.ArrayList;
 
 /**
  * A placeholder fragment containing a simple view.
  */
 public class MainActivityFragment extends Fragment implements MovieAdapter.MovieAdapterOnClickHandler,
-        LoaderManager.LoaderCallbacks<Movie[]>{
+        LoaderManager.LoaderCallbacks<Movie[]>,
+        SharedPreferences.OnSharedPreferenceChangeListener{
     private final String LOG_TAG = MainActivityFragment.class.getSimpleName();
 
     private MovieAdapter movieAdapter;
     private FragmentMainBinding mBinding;
     private static final String SORT_ORDER_EXTRA = "sort";
     private static final int FETCH_MOVIE_LOADER = 23;
+    private static MenuItem actionSortPopular;
+    private static MenuItem actionSortTopRated;
+    private static MenuItem actionSortFavorites;
 
     public MainActivityFragment() {
+        setHasOptionsMenu(true);
+    }
+
+    private void setSortCheckedSummaryPopular(){
+//        actionSortTopRated.setChecked(false);
+//        actionSortFavorites.setChecked(false);
+        actionSortPopular.setChecked(true);
+    }
+
+    private void setSortCheckedSummaryTopRated(){
+//        actionSortPopular.setChecked(false);
+//        actionSortFavorites.setChecked(false);
+        actionSortTopRated.setChecked(true);
+    }
+
+    private void setSortCheckedSummaryFavorites(){
+//        actionSortPopular.setChecked(false);
+//        actionSortTopRated.setChecked(false);
+        actionSortFavorites.setChecked(true);
+    }
+
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        inflater.inflate(R.menu.menu_main_fragment, menu);
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        String sortOrder = sharedPref.getString(getString(R.string.pref_sort_key), getString(R.string.pref_sort_popular));
+        actionSortPopular = menu.findItem(R.id.action_sort_popular);
+        actionSortTopRated = menu.findItem(R.id.action_sort_top_rated);
+        actionSortFavorites = menu.findItem(R.id.action_sort_favorites);
+        if (sortOrder.equals(getString(R.string.pref_sort_popular))) {
+            setSortCheckedSummaryPopular();
+        } else if (sortOrder.equals(getString(R.string.pref_sort_top_rated))){
+            setSortCheckedSummaryTopRated();
+        } else {
+            setSortCheckedSummaryFavorites();
+        }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        switch (id){
+            case R.id.action_sort_popular:
+                setSortCheckedSummaryPopular();
+                sharedPref.edit().putString(getString(R.string.pref_sort_key), getString(R.string.pref_sort_popular)).apply();
+                return true;
+            case R.id.action_sort_top_rated:
+                setSortCheckedSummaryTopRated();
+                sharedPref.edit().putString(getString(R.string.pref_sort_key), getString(R.string.pref_sort_top_rated)).apply();
+                return true;
+            case R.id.action_sort_favorites:
+                setSortCheckedSummaryFavorites();
+                sharedPref.edit().putString(getString(R.string.pref_sort_key), getString(R.string.pref_sort_favorites)).apply();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        if (key.equals(getString(R.string.pref_sort_key))) {
+            updateMovies();
+        }
     }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
-        setHasOptionsMenu(true);
         super.onCreate(savedInstanceState);
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        sharedPreferences.registerOnSharedPreferenceChangeListener(this);
     }
 
     @Override
@@ -82,25 +151,9 @@ public class MainActivityFragment extends Fragment implements MovieAdapter.Movie
     }
 
     @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        inflater.inflate(R.menu.menu_main_fragment, menu);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-
-        if (id == R.id.action_refresh){
-            updateMovies();
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
-    @Override
     public void onStart() {
-        super.onStart();
         updateMovies();
+        super.onStart();
     }
 
     private void showGridView(){
@@ -238,11 +291,11 @@ public class MainActivityFragment extends Fragment implements MovieAdapter.Movie
             showNoFavoritesMessage();
         } else if (movies != null){
             mBinding.recyclerviewMovies.smoothScrollToPosition(0);
-            showGridView();
             movieAdapter.clear();
             for (Movie movie : movies){
                 movieAdapter.addMovie(movie);
             }
+            showGridView();
         } else {
             showErrorMessage();
         }

@@ -2,7 +2,21 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
-        android:id="@+id/action_refresh"
-        android:title="@string/action_refresh"
-        app:showAsAction="ifRoom" />
+        android:id="@+id/action_sort"
+        android:orderInCategory="50"
+        android:title="@string/pref_sort_label"
+        app:showAsAction="ifRoom"
+        android:icon="@drawable/ic_sort_white_24dp"
+        android:visible="true">
+        <menu>
+            <group android:checkableBehavior="single">
+                <item android:id="@+id/action_sort_popular"
+                    android:title="@string/pref_sort_label_popular" />
+                <item android:id="@+id/action_sort_top_rated"
+                    android:title="@string/pref_sort_label_top_rated" />
+                <item android:id="@+id/action_sort_favorites"
+                    android:title="@string/pref_sort_label_favorites" />
+            </group>
+        </menu>
+    </item>
 </menu>

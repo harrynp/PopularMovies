@@ -23,6 +23,7 @@
                 android:layout_width="0dp"
                 android:layout_height="220dp"
                 android:scaleType="centerCrop"
+                android:adjustViewBounds="true"
                 app:layout_constraintHorizontal_bias="0.0"
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintRight_toRightOf="parent"
@@ -51,12 +52,13 @@
 
             <ImageView
                 android:id="@+id/poster_imageview"
-                android:layout_width="100dp"
+                android:layout_width="90dp"
                 android:layout_height="135dp"
                 android:layout_marginLeft="16dp"
                 android:layout_marginTop="16dp"
                 android:contentDescription="@string/posterContentDescription"
                 android:scaleType="centerCrop"
+                android:adjustViewBounds="true"
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/detail_title" />
 

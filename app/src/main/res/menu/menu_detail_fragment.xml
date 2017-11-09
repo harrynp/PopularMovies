@@ -4,10 +4,10 @@
     <item android:id="@+id/action_favorite"
         android:title="@string/action_favorite"
         app:showAsAction="always"
-        android:icon="@drawable/ic_star_border_black_24dp" />
+        android:icon="@drawable/ic_star_border_white_24dp" />
 
     <item android:id="@+id/action_share"
         android:title="@string/action_share"
         app:showAsAction="ifRoom"
-        android:icon="@drawable/ic_share_black_24dp" />
+        android:icon="@drawable/ic_share_white_24dp" />
 </menu>
