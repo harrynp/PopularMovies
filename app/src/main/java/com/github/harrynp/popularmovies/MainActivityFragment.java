@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.databinding.DataBindingUtil;
 import android.net.ConnectivityManager;
 import android.preference.PreferenceManager;
@@ -12,6 +13,7 @@ import android.support.v4.app.Fragment;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
+import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.text.TextUtils;
@@ -24,6 +26,8 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.github.harrynp.popularmovies.adapters.MovieAdapter;
+import com.github.harrynp.popularmovies.data.FavoritesContract;
+import com.github.harrynp.popularmovies.data.FavoritesDbHelper;
 import com.github.harrynp.popularmovies.data.Movie;
 import com.github.harrynp.popularmovies.databinding.FragmentMainBinding;
 import com.github.harrynp.popularmovies.utils.GridAutofitLayoutManager;
@@ -101,10 +105,19 @@ public class MainActivityFragment extends Fragment implements MovieAdapter.Movie
 
     private void showGridView(){
         mBinding.tvErrorMessageDisplay.setVisibility(View.INVISIBLE);
+        mBinding.noFavoritesMessage.setVisibility(View.INVISIBLE);
         mBinding.recyclerviewMovies.setVisibility(View.VISIBLE);
     }
+
+    private void showNoFavoritesMessage(){
+        mBinding.recyclerviewMovies.setVisibility(View.INVISIBLE);
+        mBinding.tvErrorMessageDisplay.setVisibility(View.INVISIBLE);
+        mBinding.noFavoritesMessage.setVisibility(View.VISIBLE);
+    }
+
     private void showErrorMessage(){
         mBinding.recyclerviewMovies.setVisibility(View.INVISIBLE);
+        mBinding.noFavoritesMessage.setVisibility(View.INVISIBLE);
         mBinding.tvErrorMessageDisplay.setVisibility(View.VISIBLE);
     }
 
@@ -140,55 +153,90 @@ public class MainActivityFragment extends Fragment implements MovieAdapter.Movie
     @SuppressLint("StaticFieldLeak")
     @Override
     public Loader<Movie[]> onCreateLoader(int id, final Bundle args) {
-        return new AsyncTaskLoader<Movie[]>(getContext()) {
+        switch (id) {
+            case FETCH_MOVIE_LOADER:
+                return new AsyncTaskLoader<Movie[]>(getContext()) {
 
-            @Override
-            protected void onStartLoading() {
-                super.onStartLoading();
-                //No sort order
-                if (args == null){
-                    return;
-                }
-                showGridView();
-                mBinding.pbLoadingIndicator.setVisibility(View.VISIBLE);
-                forceLoad();
-            }
+                    @Override
+                    protected void onStartLoading() {
+                        super.onStartLoading();
+                        //No sort order
+                        if (args == null) {
+                            return;
+                        }
+                        showGridView();
+                        mBinding.pbLoadingIndicator.setVisibility(View.VISIBLE);
+                        forceLoad();
+                    }
 
-            @Override
-            public Movie[] loadInBackground() {
-                String sortOrder = args.getString(SORT_ORDER_EXTRA);
-                // Verify there's a sort order.
-                if (sortOrder == null || TextUtils.isEmpty(sortOrder)) {
-                    return null;
-                }
-                String moviesJsonString;
+                    @Override
+                    public Movie[] loadInBackground() {
+                        String sortOrder = args.getString(SORT_ORDER_EXTRA);
+                        // Verify there's a sort order.
+                        if (sortOrder == null || TextUtils.isEmpty(sortOrder)) {
+                            return null;
+                        }
 
-                URL url = NetworkUtils.buildUrl(sortOrder);
-                if (url != null) {
-                    try {
-                        moviesJsonString = NetworkUtils.getResponseFromHttpUrl(url);
-                    } catch (IOException e) {
-                        Log.e(LOG_TAG, e.getMessage(), e);
+                        if (sortOrder.equals(getString(R.string.pref_sort_favorites))) {
+                            Cursor cursor = getActivity().getContentResolver().query(
+                                    FavoritesContract.FavoritesEntry.CONTENT_URI,
+                                    null,
+                                    null,
+                                    null,
+                                    FavoritesContract.FavoritesEntry.COLUMN_TITLE);
+                            Movie[] movies = new Movie[cursor.getCount()];
+                            int position = 0;
+                            while(cursor.moveToNext()){
+                                movies[position] = new Movie(
+                                        cursor.getString(cursor.getColumnIndex(FavoritesContract.FavoritesEntry.COLUMN_TITLE)),
+                                        cursor.getInt(cursor.getColumnIndex(FavoritesContract.FavoritesEntry.COLUMN_MOVIE_ID)),
+                                        cursor.getString(cursor.getColumnIndex(FavoritesContract.FavoritesEntry.COLUMN_POSTER_PATH)),
+                                        cursor.getString(cursor.getColumnIndex(FavoritesContract.FavoritesEntry.COLUMN_BACKDROP_PATH)),
+                                        cursor.getString(cursor.getColumnIndex(FavoritesContract.FavoritesEntry.COLUMN_OVERVIEW)),
+                                        cursor.getDouble(cursor.getColumnIndex(FavoritesContract.FavoritesEntry.COLUMN_VOTE_AVERAGE)),
+                                        cursor.getString(cursor.getColumnIndex(FavoritesContract.FavoritesEntry.COLUMN_RELEASE_DATE)),
+                                        cursor.getInt(cursor.getColumnIndex(FavoritesContract.FavoritesEntry.COLUMN_VOTE_COUNT))
+                                );
+                            }
+                            return movies;
+                        }
+
+                        String moviesJsonString;
+
+                        URL url = NetworkUtils.buildUrl(sortOrder);
+                        if (url != null) {
+                            try {
+                                moviesJsonString = NetworkUtils.getResponseFromHttpUrl(url);
+                            } catch (IOException e) {
+                                Log.e(LOG_TAG, e.getMessage(), e);
+                                return null;
+                            }
+                            try {
+                                return MovieDBJsonUtils.getMovieDataFromJson(moviesJsonString);
+                            } catch (JSONException e) {
+                                Log.e(LOG_TAG, e.getMessage(), e);
+                            }
+                        }
+                        // This will only happen if there was an error getting or parsing the movies.
                         return null;
                     }
-                    try {
-                        return MovieDBJsonUtils.getMovieDataFromJson(moviesJsonString);
-                    } catch (JSONException e) {
-                        Log.e(LOG_TAG, e.getMessage(), e);
-                    }
-                }
-                // This will only happen if there was an error getting or parsing the movies.
-                return null;
-            }
-        };
+                };
+            default:
+                throw new RuntimeException("Loader Not Implemented: " + id);
+        }
     }
 
     @Override
     public void onLoadFinished(Loader<Movie[]> loader, Movie[] movies) {
-        //If there is new data from the JSON object
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        String sortOrder = sharedPref.getString(getString(R.string.pref_sort_key), getString(R.string.pref_sort_popular));
+        //If there is new data from the JSON object or favorites
         mBinding.pbLoadingIndicator.setVisibility(View.INVISIBLE);
         mBinding.swiperefresh.setRefreshing(false);
-        if (movies != null){
+
+        if (sortOrder.equals(getString(R.string.pref_sort_favorites)) && movies.length == 0) {
+            showNoFavoritesMessage();
+        } else if (movies != null){
             mBinding.recyclerviewMovies.smoothScrollToPosition(0);
             showGridView();
             movieAdapter.clear();
