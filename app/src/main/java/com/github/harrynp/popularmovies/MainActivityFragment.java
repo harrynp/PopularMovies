@@ -7,7 +7,9 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.databinding.DataBindingUtil;
 import android.net.ConnectivityManager;
+import android.os.Parcelable;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
@@ -48,30 +50,27 @@ public class MainActivityFragment extends Fragment implements MovieAdapter.Movie
     private MovieAdapter movieAdapter;
     private FragmentMainBinding mBinding;
     private static final String SORT_ORDER_EXTRA = "sort";
+    private static final String SAVED_MOVIES_KEY = "saved_movies";
+    private static final String SCROLLBAR_POSITION_KEY = "scrollbar_position";
     private static final int FETCH_MOVIE_LOADER = 23;
     private static MenuItem actionSortPopular;
     private static MenuItem actionSortTopRated;
     private static MenuItem actionSortFavorites;
+    private static Movie[] mMovies;
 
     public MainActivityFragment() {
         setHasOptionsMenu(true);
     }
 
     private void setSortCheckedSummaryPopular(){
-//        actionSortTopRated.setChecked(false);
-//        actionSortFavorites.setChecked(false);
         actionSortPopular.setChecked(true);
     }
 
     private void setSortCheckedSummaryTopRated(){
-//        actionSortPopular.setChecked(false);
-//        actionSortFavorites.setChecked(false);
         actionSortTopRated.setChecked(true);
     }
 
     private void setSortCheckedSummaryFavorites(){
-//        actionSortPopular.setChecked(false);
-//        actionSortTopRated.setChecked(false);
         actionSortFavorites.setChecked(true);
     }
 
@@ -124,6 +123,15 @@ public class MainActivityFragment extends Fragment implements MovieAdapter.Movie
     }
 
     @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        if (mMovies != null){
+            outState.putParcelableArray(SAVED_MOVIES_KEY, mMovies);
+            outState.putInt(SCROLLBAR_POSITION_KEY, ((GridAutofitLayoutManager) mBinding.recyclerviewMovies.getLayoutManager()).findFirstCompletelyVisibleItemPosition());
+        }
+    }
+
+    @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
@@ -147,13 +155,21 @@ public class MainActivityFragment extends Fragment implements MovieAdapter.Movie
         mBinding.recyclerviewMovies.setLayoutManager(layoutManager);
         mBinding.recyclerviewMovies.setHasFixedSize(true);
         mBinding.recyclerviewMovies.setAdapter(movieAdapter);
+        if (savedInstanceState != null){
+            if (savedInstanceState.containsKey(SAVED_MOVIES_KEY)) {
+                Parcelable[] movies = savedInstanceState.getParcelableArray(SAVED_MOVIES_KEY);
+                int position = savedInstanceState.getInt(SCROLLBAR_POSITION_KEY);
+                for (Parcelable movie : movies) {
+                    movieAdapter.addMovie((Movie) movie);
+                }
+                mBinding.recyclerviewMovies.getLayoutManager().scrollToPosition(position);
+            } else {
+                updateMovies();
+            }
+        } else {
+            updateMovies();
+        }
         return mBinding.getRoot();
-    }
-
-    @Override
-    public void onStart() {
-        updateMovies();
-        super.onStart();
     }
 
     private void showGridView(){
@@ -184,6 +200,7 @@ public class MainActivityFragment extends Fragment implements MovieAdapter.Movie
 
     private void updateMovies(){
         if(isOnline()) {
+            mBinding.recyclerviewMovies.smoothScrollToPosition(0);
             SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getActivity());
             String sortOrder = sharedPref.getString(getString(R.string.pref_sort_key), getString(R.string.pref_sort_popular));
             Bundle sortBundle = new Bundle();
@@ -290,8 +307,8 @@ public class MainActivityFragment extends Fragment implements MovieAdapter.Movie
         if (sortOrder.equals(getString(R.string.pref_sort_favorites)) && movies.length == 0) {
             showNoFavoritesMessage();
         } else if (movies != null){
-            mBinding.recyclerviewMovies.smoothScrollToPosition(0);
             movieAdapter.clear();
+            mMovies = movies;
             for (Movie movie : movies){
                 movieAdapter.addMovie(movie);
             }
